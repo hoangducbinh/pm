@@ -1,21 +1,21 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard, TouchableOpacity } from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
+
 
 const ChatGroupScreen = ({ route }) => {
   const { groupId } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const flatListRef = useRef(null); // Tham chiếu đến FlatList
+
 
   useEffect(() => {
     const unsubscribe = firestore()
       .collection('GroupChats')
       .doc(groupId)
       .collection('Messages')
-      .orderBy('createdAt', 'asc')
+      .orderBy('createdAt', 'desc') // Sắp xếp theo thời gian tạo giảm dần
       .onSnapshot(snapshot => {
         const messageList = [];
         snapshot.forEach(doc => {
@@ -26,55 +26,46 @@ const ChatGroupScreen = ({ route }) => {
     return () => unsubscribe();
   }, [groupId]);
 
+
   const handleSend = async () => {
     if (newMessage.trim() === '') return;
-
+    Keyboard.dismiss(); // Ẩn bàn phím
+    // Xóa nội dung tin nhắn sau khi gửi
+    setNewMessage('');
     try {
-      const senderSnapshot = await firestore().collection('Member').doc(firebase.auth().currentUser.uid).get();
+      // Kiểm tra xem người dùng đã đăng nhập chưa
+      const currentUser = firebase.auth().currentUser;
+      if (!currentUser) {
+        console.error('Error sending message: User is not logged in');
+        return;
+      }
+      
+      // Lấy thông tin của người gửi
+      const senderSnapshot = await firestore().collection('Member').doc(currentUser.uid).get();
       const senderData = senderSnapshot.data();
-      const senderName = senderData ? senderData.name : "Unknown";
-
-      Keyboard.dismiss();
-      setNewMessage('');
-
+      const senderName = senderData ? senderData.Name : "Unknown";
+  
+      // Đảm bảo rằng senderId và senderName có giá trị
+      if (!currentUser.uid || !senderName) {
+        console.error('Error sending message: Sender information is undefined');
+        return;
+      }
+      // Thêm tin nhắn vào Firestore
       await firestore().collection('GroupChats').doc(groupId).collection('Messages').add({
         text: newMessage,
         createdAt: firestore.FieldValue.serverTimestamp(),
-        senderId: firebase.auth().currentUser.uid,
+        senderId: currentUser.uid,
         senderName: senderName,
       });
-
-      flatListRef.current.scrollToEnd(); // Cuộn xuống tin nhắn mới sau khi gửi
+      
+      
+      
     } catch (error) {
       console.error('Error sending message: ', error);
     }
   };
+  
 
-  const handleChooseImage = () => {
-    const options = {
-      title: 'Select Image',
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    };
-
-    launchImageLibrary.showImagePicker(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else {
-        console.log('Response = ', response);
-
-        // Handle image upload here
-        // You can upload the image to Firebase Storage and then send the image URL in the message
-        // Example:
-        // const imageUrl = await uploadImageToStorage(response.uri);
-        // await sendMessageWithImage(imageUrl);
-      }
-    });
-  };
 
   const renderMessageItem = ({ item }) => {
     const isMyMessage = item.senderId === firebase.auth().currentUser.uid;
@@ -83,15 +74,11 @@ const ChatGroupScreen = ({ route }) => {
         {!isMyMessage && <Image style={styles.avatar} source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtajIEIEWD4IRO96S1qflyEjySsZxXi7VxLdAdrmVWEA&s' }} />}
         <View style={styles.messageContent}>
           <View style={styles.messageHeader}>
-            <Text style={styles.messageSender}>{item.senderName}</Text>
             <Text style={styles.messageTime}>{formatMessageTime(item.createdAt)}</Text>
+            <Text style={styles.messageSender}>{item.senderName}</Text>
           </View>
           <View style={[styles.message, isMyMessage ? styles.myMessage : styles.otherMessage]}>
-            {item.imageUrl ? (
-              <Image style={styles.imageMessage} source={{ uri: item.imageUrl }} />
-            ) : (
-              <Text style={styles.messageText}>{item.text}</Text>
-            )}
+            <Text style={styles.messageText}>{item.text}</Text>
           </View>
         </View>
         {isMyMessage && <Image style={styles.avatar} source={{ uri: 'https://technewsdaily.vn/uploads/2023/01/20/f-14.jpg' }} />}
@@ -99,21 +86,22 @@ const ChatGroupScreen = ({ route }) => {
     );
   };
 
+
   const formatMessageTime = (timestamp) => {
     if (!timestamp) return "";
-    const date = timestamp.toDate(); 
+    const date = timestamp.toDate();
     return `${date.getHours()}:${('0' + date.getMinutes()).slice(-2)}`;
   };
+
 
   return (
     <View style={styles.container}>
       <FlatList
-        ref={flatListRef} // Tham chiếu đến FlatList
         data={messages}
         renderItem={renderMessageItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.messageList}
-        inverted={false}
+        inverted={true} // Đảo ngược danh sách để hiển thị tin nhắn mới nhất ở đầu
       />
       <View style={styles.inputContainer}>
         <TextInput
@@ -122,14 +110,12 @@ const ChatGroupScreen = ({ route }) => {
           onChangeText={setNewMessage}
           placeholder="Type your message..."
         />
-        <TouchableOpacity onPress={handleChooseImage}>
-          <Text>Choose Image</Text>
-        </TouchableOpacity>
         <Button title="Send" onPress={handleSend} />
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -179,11 +165,12 @@ const styles = StyleSheet.create({
   messageSender: {
     color: '#ccc',
     fontSize: 12,
+    marginLeft: 5
   },
   messageTime: {
     color: '#ccc',
     fontSize: 12,
-    marginLeft: 5,
+    
   },
   avatar: {
     width: 20,
@@ -209,5 +196,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
+
 
 export default ChatGroupScreen;

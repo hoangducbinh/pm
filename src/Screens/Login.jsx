@@ -4,11 +4,11 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
 const LoginScreen = ({ navigation }) => {
-  // const [email, setEmail] = useState('hung@gmail.com');
-  // const [password, setPassword] = useState('12345678');
-
-  const [email, setEmail] = useState('vune@gmail.com');
+  const [email, setEmail] = useState('hung@gmail.com');
   const [password, setPassword] = useState('12345678');
+
+  // const [email, setEmail] = useState('vune@gmail.com');
+  // const [password, setPassword] = useState('12345678');
 
 
   const handleLogin = async () => {
