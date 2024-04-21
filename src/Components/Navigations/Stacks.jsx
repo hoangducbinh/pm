@@ -21,8 +21,6 @@ const Stacks = () => {
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="ChatGroups" component={ChatGroups} />
         <Stack.Screen name="Chats" component={Chats} />
-        
-        
       </Stack.Navigator>
     </NavigationContainer>
   );

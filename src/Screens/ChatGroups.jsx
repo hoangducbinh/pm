@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { setLoggedIn } from '../Components/Redux/reducers/authReducer';
 
 const ChatGroups = () => {
   const [projects, setProjects] = useState([]);
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const unsubscribe = firestore()
@@ -48,6 +51,20 @@ const ChatGroups = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      // Thực hiện các bước đăng xuất ở đây, ví dụ: xóa thông tin đăng nhập khỏi AsyncStorage, đặt trạng thái đăng nhập về false trong Redux, ...
+      
+      // Ví dụ:
+      dispatch(setLoggedIn(false));
+
+      // Điều hướng người dùng về màn hình đăng nhập
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Lỗi khi đăng xuất:', error);
+    }
+  };
+
   const renderProjectItem = ({ item }) => (
     <TouchableOpacity style={styles.projectItem} onPress={() => handleChatButtonPress(item.id)}>
       <View style={styles.projectInfo}>
@@ -59,12 +76,18 @@ const ChatGroups = () => {
   );
 
   return (
-    <FlatList
-      style={styles.container}
-      data={projects}
-      renderItem={renderProjectItem}
-      keyExtractor={item => item.id}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={projects}
+        renderItem={renderProjectItem}
+        keyExtractor={item => item.id}
+      />
+      {/* Button đăng xuất */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Đăng xuất</Text>
+      </TouchableOpacity>
+    </View>
+    
   );
 };
 
@@ -94,6 +117,14 @@ const styles = StyleSheet.create({
   },
   date: {
     color: '#999',
+  },
+  logoutButton: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  logoutText: {
+    color: 'red',
+    fontSize: 16,
   },
 });
 

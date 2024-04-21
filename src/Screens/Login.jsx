@@ -1,29 +1,88 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setEmail, setPassword, setLoggedIn } from '../Components/Redux/reducers/authReducer';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+
+
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('hung@gmail.com');
-  const [password, setPassword] = useState('12345678');
+  const dispatch = useDispatch();
+  const email = useSelector(state => state.auth.email);
+  const password = useSelector(state => state.auth.password);
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '771472051384-92md3lqo33it25svcfsnuploa9blu9ig.apps.googleusercontent.com',
+    });
+  }, [])
+  useEffect(() => {
+    const checkLoggedIn = async () => {
+      try {
+        // Kiểm tra xem có thông tin đăng nhập đã được lưu trong AsyncStorage không
+        const savedEmail = await AsyncStorage.getItem('email');
+        const savedPassword = await AsyncStorage.getItem('password');
+        if (savedEmail && savedPassword) {
+          dispatch(setEmail(savedEmail));
+          dispatch(setPassword(savedPassword));
+          dispatch(setLoggedIn(true));
+          navigation.navigate('ChatGroups');
+        }
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra thông tin đăng nhập:', error);
+      }
+    };
+
+    checkLoggedIn();
+  }, []); // Chỉ chạy một lần sau khi màn hình được hiển thị lần đầu tiên
+
+  const handleEmailLogin = async () => {
     try {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
-  
-      // Lấy thông tin tài khoản từ Firestore
-      const userDoc = await firestore().collection('Member').doc(user.uid).get();
-      const userData = userDoc.data();
-  
-      // Đăng nhập thành công, bạn có thể xử lý tiếp theo ở đây, ví dụ: điều hướng đến màn hình tiếp theo
-      console.log('Đăng nhập thành công:', userData);
+
+      // Lưu thông tin đăng nhập vào AsyncStorage
+      await AsyncStorage.setItem('email', email);
+      await AsyncStorage.setItem('password', password);
+
+      console.log('Đăng nhập thành công:', user);
+      dispatch(setLoggedIn(true));
       navigation.navigate('ChatGroups');
     } catch (error) {
-      console.error('Lỗi đăng nhập:', error.code, error.message); // In ra thông báo lỗi cụ thể từ Firebase
+      console.error('Lỗi đăng nhập:', error.code, error.message);
+    }
+  };
+  async function onGoogleButtonPress() {
+    try {
+      // Check if your device supports Google Play
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Get the users ID token
+      const { idToken } = await GoogleSignin.signIn();
+     // console.log('ID Token:', idToken);
+      
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+        dispatch(setLoggedIn(true));
+        navigation.navigate('ChatGroups');
+      // Sign-in the user with the credential
+      return auth().signInWithCredential(googleCredential);
+     
+    } catch (error) {
+      console.error('Lỗi đăng nhập Google:', error.code, error.message);
+      
+      // Xử lý lỗi và hiển thị thông báo cho người dùng
+      //alert('Đăng nhập bằng Google không thành công. Vui lòng thử lại sau.');
     }
   };
   
+
+
+
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
@@ -32,7 +91,7 @@ const LoginScreen = ({ navigation }) => {
           style={styles.input}
           placeholder="Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={text => dispatch(setEmail(text))}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -40,11 +99,14 @@ const LoginScreen = ({ navigation }) => {
           style={styles.input}
           placeholder="Mật khẩu"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={text => dispatch(setPassword(text))}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity style={styles.button} onPress={handleEmailLogin}>
           <Text style={styles.buttonText}>Đăng nhập</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={onGoogleButtonPress}>
+          <Text style={styles.buttonText}>Đăng nhập bằng Google</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.forgotPasswordButton}>
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>

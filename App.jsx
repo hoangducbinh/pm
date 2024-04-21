@@ -1,17 +1,16 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import Stacks from "./src/Components/Navigations/Stacks";
-import GradientButton from "./src/Components/Button/GradientButton";
+import { Provider } from "react-redux";
+import { store } from "./src/Components/Redux/store";
 
 
 const App = () => {
-  
-
-
   return (
-    
-      <Stacks />
-   
+    <Provider store={store}>
+         <Stacks />
+    </Provider>
+     
   );
 };
 

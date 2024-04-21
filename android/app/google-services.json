@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "771472051384",
+    "firebase_url": "https://pm-native-default-rtdb.firebaseio.com",
     "project_id": "pm-native",
     "storage_bucket": "pm-native.appspot.com"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.pm"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "771472051384-fp29946j4nhcb09lm6u4dfu61s8vbhhj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pm",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "771472051384-92md3lqo33it25svcfsnuploa9blu9ig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC5J9YsCtjFOt-AHnll3-kise3hZtDDvEk"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "771472051384-92md3lqo33it25svcfsnuploa9blu9ig.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "771472051384-j20f8p67k06u8ejpdphes0mp0s521jh3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.reactjs.native.example.pm"
+              }
+            }
+          ]
         }
       }
     }
