@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setEmail, setPassword, setLoggedIn } from '../Components/Redux/reducers/authReducer';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+
 
 
 
@@ -57,32 +58,10 @@ const LoginScreen = ({ navigation }) => {
       console.error('Lỗi đăng nhập:', error.code, error.message);
     }
   };
-  async function onGoogleButtonPress() {
-    try {
-      // Check if your device supports Google Play
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      // Get the users ID token
-      const { idToken } = await GoogleSignin.signIn();
-     // console.log('ID Token:', idToken);
-      
-      // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-        dispatch(setLoggedIn(true));
-        navigation.navigate('ChatGroups');
-      // Sign-in the user with the credential
-      return auth().signInWithCredential(googleCredential);
-     
-    } catch (error) {
-      console.error('Lỗi đăng nhập Google:', error.code, error.message);
-      
-      // Xử lý lỗi và hiển thị thông báo cho người dùng
-      //alert('Đăng nhập bằng Google không thành công. Vui lòng thử lại sau.');
-    }
-  };
   
-
-
-
+  
+ 
+ 
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
@@ -105,10 +84,9 @@ const LoginScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.button} onPress={handleEmailLogin}>
           <Text style={styles.buttonText}>Đăng nhập</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={onGoogleButtonPress}>
-          <Text style={styles.buttonText}>Đăng nhập bằng Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.forgotPasswordButton}>
+       
+       
+        <TouchableOpacity style={styles.forgotPasswordButton} >
           <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
       </View>

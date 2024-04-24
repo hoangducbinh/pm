@@ -4,6 +4,9 @@ import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { setLoggedIn } from '../Components/Redux/reducers/authReducer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const ChatGroups = () => {
   const [projects, setProjects] = useState([]);
@@ -53,17 +56,23 @@ const ChatGroups = () => {
 
   const handleLogout = async () => {
     try {
-      // Thực hiện các bước đăng xuất ở đây, ví dụ: xóa thông tin đăng nhập khỏi AsyncStorage, đặt trạng thái đăng nhập về false trong Redux, ...
-      
-      // Ví dụ:
+      await AsyncStorage.removeItem('email');
+      await AsyncStorage.removeItem('password');
+  
       dispatch(setLoggedIn(false));
-
-      // Điều hướng người dùng về màn hình đăng nhập
+  
+      //await auth().signOut();
+  
+      // await GoogleSignin.revokeAccess();
+      // await GoogleSignin.signOut();
+  
       navigation.navigate('Login');
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);
     }
   };
+
+  
 
   const renderProjectItem = ({ item }) => (
     <TouchableOpacity style={styles.projectItem} onPress={() => handleChatButtonPress(item.id)}>
