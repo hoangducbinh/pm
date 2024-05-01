@@ -5,9 +5,13 @@ import firebase from '@react-native-firebase/app';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Emoji from 'react-native-vector-icons/Entypo';
 import EmojiSelector from 'react-native-emoji-selector';
+import { useDispatch } from 'react-redux';
+import { setNewMessageNotification } from '../Redux/reducers/notificationReducer';
+import PushNotification from 'react-native-push-notification';
 
 const Chats = ({ route, navigation }) => {
   const { groupId } = route.params;
+  const dispatch = useDispatch();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -24,9 +28,15 @@ const Chats = ({ route, navigation }) => {
           messageList.push({ id: doc.id, ...doc.data() });
         });
         setMessages(messageList);
+
+         // Gửi thông báo đến Redux store khi có tin nhắn mới
+      if (messageList.length > 0) {
+        const latestMessage = messageList[0]; // Tin nhắn mới nhất
+        dispatch(setNewMessageNotification(`Bạn có một tin nhắn mới từ ${latestMessage.senderName}`));
+      }
       });
     return () => unsubscribe();
-  }, [groupId]);
+  }, [dispatch, groupId]);
 
   const handleSend = async () => {
     if (newMessage.trim() === '') return;
@@ -52,6 +62,13 @@ const Chats = ({ route, navigation }) => {
         senderId: currentUser.uid,
         senderName: senderName,
       });
+
+      // Gửi thông báo đẩy khi có tin nhắn mới
+    PushNotification.localNotification({
+      title: 'New Message',
+      message: `You have a new message from ${senderName}`,
+    });
+
     } catch (error) {
       console.error('Error sending message: ', error);
     }

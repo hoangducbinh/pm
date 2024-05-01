@@ -5,8 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { setLoggedIn } from '../Components/Redux/reducers/authReducer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 
 const ChatGroups = () => {
   const [projects, setProjects] = useState([]);
@@ -61,16 +60,16 @@ const ChatGroups = () => {
   
       dispatch(setLoggedIn(false));
   
-      //await auth().signOut();
-  
-      // await GoogleSignin.revokeAccess();
-      // await GoogleSignin.signOut();
   
       navigation.navigate('Login');
     } catch (error) {
       console.error('Lỗi khi đăng xuất:', error);
     }
   };
+
+  const handleHome =()=>{
+    navigation.navigate('Home');
+  }
 
   
 
@@ -86,6 +85,7 @@ const ChatGroups = () => {
 
   return (
     <View style={styles.container}>
+     
       <FlatList
         data={projects}
         renderItem={renderProjectItem}
@@ -95,6 +95,11 @@ const ChatGroups = () => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleHome}>
+        <Text style={styles.logoutText}>Home</Text>
+      </TouchableOpacity>
+
     </View>
     
   );

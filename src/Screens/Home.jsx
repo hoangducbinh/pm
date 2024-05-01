@@ -1,17 +1,15 @@
-import { Text, View } from "react-native"
+import React from 'react';
+import { View, Text } from 'react-native';
+import { useSelector } from 'react-redux';
 
-const Home=()=>{
-    return(
-        <View>
-            <Text>
-                    Home
-            </Text>
-        </View>
-    )
-}
+const Home = () => {
+  const newMessageNotification = useSelector(state => state.notification.newMessageNotification);
 
+  return (
+    <View>
+      {newMessageNotification && <Text>{newMessageNotification}</Text>}
+    </View>
+  );
+};
 
-
-
-
-export default Home
+export default Home;
