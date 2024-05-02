@@ -7,7 +7,7 @@ import Emoji from 'react-native-vector-icons/Entypo';
 import EmojiSelector from 'react-native-emoji-selector';
 import { useDispatch } from 'react-redux';
 import { setNewMessageNotification } from '../Redux/reducers/notificationReducer';
-import PushNotification from 'react-native-push-notification';
+
 
 const Chats = ({ route, navigation }) => {
   const { groupId } = route.params;
@@ -29,11 +29,7 @@ const Chats = ({ route, navigation }) => {
         });
         setMessages(messageList);
 
-         // Gửi thông báo đến Redux store khi có tin nhắn mới
-      if (messageList.length > 0) {
-        const latestMessage = messageList[0]; // Tin nhắn mới nhất
-        dispatch(setNewMessageNotification(`Bạn có một tin nhắn mới từ ${latestMessage.senderName}`));
-      }
+        
       });
     return () => unsubscribe();
   }, [dispatch, groupId]);
@@ -63,11 +59,7 @@ const Chats = ({ route, navigation }) => {
         senderName: senderName,
       });
 
-      // Gửi thông báo đẩy khi có tin nhắn mới
-    PushNotification.localNotification({
-      title: 'New Message',
-      message: `You have a new message from ${senderName}`,
-    });
+     
 
     } catch (error) {
       console.error('Error sending message: ', error);
