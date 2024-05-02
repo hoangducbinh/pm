@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setEmail, setPassword, setLoggedIn } from '../Components/Redux/reducers/authReducer';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+
 
 
 
@@ -17,11 +17,7 @@ const LoginScreen = ({ navigation }) => {
   const email = useSelector(state => state.auth.email);
   const password = useSelector(state => state.auth.password);
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: '771472051384-92md3lqo33it25svcfsnuploa9blu9ig.apps.googleusercontent.com',
-    });
-  }, [])
+ 
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
