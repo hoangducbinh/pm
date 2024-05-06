@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { setLoggedIn } from '../Components/Redux/reducers/authReducer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const ChatGroups = () => {
   const [projects, setProjects] = useState([]);
@@ -26,14 +25,46 @@ const ChatGroups = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection('GroupChats')
+      .onSnapshot(snapshot => {
+        const updatedProjects = projects.map(project => {
+          const groupChat = snapshot.docs.find(doc => doc.data().projectId === project.id);
+          if (groupChat) {
+            const latestMessageRef = groupChat.ref.collection('Messages').orderBy('createdAt', 'desc').limit(1);
+            latestMessageRef.onSnapshot(latestMessageSnapshot => {
+              const latestMessage = latestMessageSnapshot.docs[0]?.data();
+              const updatedProject = { ...project, latestMessage: latestMessage?.text || '', unreadMessages: latestMessage ? 1 : 0 };
+              const index = projects.findIndex(p => p.id === project.id);
+              const updatedProjects = [...projects];
+              updatedProjects[index] = updatedProject;
+              setProjects(updatedProjects);
+            });
+          }
+          return project;
+        });
+        setProjects(updatedProjects);
+      });
+    // Clean up subscription
+    return () => unsubscribe();
+  }, [projects]); // Make sure to include projects as a dependency
+
   const handleChatButtonPress = async (projectId) => {
     const groupChatRef = await firestore().collection('GroupChats').where('projectId', '==', projectId).get();
     if (groupChatRef.empty) {
+      await createNewGroupChat(projectId);
+    } else {
+      navigation.navigate('Chats', { groupId: groupChatRef.docs[0].id });
+    }
+  };
+
+  const createNewGroupChat = async (projectId) => {
+    try {
       const projectRef = await firestore().collection('Project').doc(projectId).get();
       const projectData = projectRef.data();
       if (!projectData) {
-        console.error(`Project with ID ${projectId} does not exist`);
-        return;
+        throw new Error(`Project with ID ${projectId} does not exist`);
       }
 
       const newGroupChatRef = await firestore().collection('GroupChats').add({
@@ -43,13 +74,11 @@ const ChatGroups = () => {
       const membersSnapshot = await firestore().collection('Project').doc(projectId).collection('Member_PJ').get();
       const members = membersSnapshot.docs.map(doc => doc.data());
 
-      members.forEach(member => {
-        newGroupChatRef.collection('Members').add(member);
-      });
+      await Promise.all(members.map(member => newGroupChatRef.collection('Members').add(member)));
 
       navigation.navigate('Chats', { groupId: newGroupChatRef.id });
-    } else {
-      navigation.navigate('Chats', { groupId: groupChatRef.docs[0].id });
+    } catch (error) {
+      console.error('Error creating new group chat:', error);
     }
   };
 
@@ -57,35 +86,35 @@ const ChatGroups = () => {
     try {
       await AsyncStorage.removeItem('email');
       await AsyncStorage.removeItem('password');
-  
       dispatch(setLoggedIn(false));
-  
-  
       navigation.navigate('Login');
     } catch (error) {
-      console.error('Lỗi khi đăng xuất:', error);
+      console.error('Error logging out:', error);
     }
   };
 
-  const handleHome =()=>{
+  const handleHome = () => {
     navigation.navigate('Home');
-  }
-
-  
+  };
 
   const renderProjectItem = ({ item }) => (
     <TouchableOpacity style={styles.projectItem} onPress={() => handleChatButtonPress(item.id)}>
       <View style={styles.projectInfo}>
-        <Text style={styles.projectName}>{item.Project_name}</Text>
+        <Text style={styles.projectName}>Project Name: {item.Project_name}</Text>
         <Text style={styles.date}>Start day: {item.Start_day.toDate().toDateString()}</Text>
         <Text style={styles.date}>End day: {item.End_day.toDate().toDateString()}</Text>
+        {item.unreadMessages > 0 && (
+          <Text style={styles.unreadMessages}>{item.unreadMessages} tin nhắn chưa đọc</Text>
+        )}
+        {item.latestMessage !== '' && (
+          <Text style={styles.latestMessage}>Tin nhắn mới nhất: {item.latestMessage}</Text>
+        )}
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-     
       <FlatList
         data={projects}
         renderItem={renderProjectItem}
@@ -101,7 +130,6 @@ const ChatGroups = () => {
       </TouchableOpacity>
 
     </View>
-    
   );
 };
 
@@ -139,6 +167,14 @@ const styles = StyleSheet.create({
   logoutText: {
     color: 'red',
     fontSize: 16,
+  },
+  unreadMessages: {
+    color: 'blue',
+    fontSize: 14,
+  },
+  latestMessage: {
+    color: 'green',
+    fontSize: 14,
   },
 });
 

@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, Modal, Dimensions } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, StatusBar } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Emoji from 'react-native-vector-icons/Entypo';
-import EmojiSelector from 'react-native-emoji-selector';
 import { useDispatch } from 'react-redux';
-import { setNewMessageNotification } from '../Redux/reducers/notificationReducer';
-
 
 const Chats = ({ route, navigation }) => {
+
   const { groupId } = route.params;
   const dispatch = useDispatch();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+ 
 
   useEffect(() => {
     const unsubscribe = firestore()
@@ -28,8 +25,6 @@ const Chats = ({ route, navigation }) => {
           messageList.push({ id: doc.id, ...doc.data() });
         });
         setMessages(messageList);
-
-        
       });
     return () => unsubscribe();
   }, [dispatch, groupId]);
@@ -47,7 +42,6 @@ const Chats = ({ route, navigation }) => {
       const senderSnapshot = await firestore().collection('Member').doc(currentUser.uid).get();
       const senderData = senderSnapshot.data();
       const senderName = senderData ? senderData.Name : "Unknown";
-  
       if (!currentUser.uid || !senderName) {
         console.error('Error sending message: Sender information is undefined');
         return;
@@ -58,21 +52,9 @@ const Chats = ({ route, navigation }) => {
         senderId: currentUser.uid,
         senderName: senderName,
       });
-
-     
-
     } catch (error) {
       console.error('Error sending message: ', error);
     }
-  };
-  
-  const handleEmojiSelect = (emoji) => {
-    setNewMessage(prevMessage => prevMessage + emoji);
-    setShowEmojiPicker(false); // Close emoji picker after selection
-  };
-
-  const handleEmojiPickerCancel = () => {
-    setShowEmojiPicker(false); // Close emoji picker without selecting any emoji
   };
 
   const renderMessageItem = ({ item }) => {
@@ -105,7 +87,7 @@ const Chats = ({ route, navigation }) => {
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-left" size={20} color="#007bff" />
       </TouchableOpacity>
-      <Text style={styles.title}>Group Chat</Text>
+      {/* <Text style={styles.title}>Group Chat</Text> */}
       <FlatList
         data={messages}
         renderItem={renderMessageItem}
@@ -117,36 +99,16 @@ const Chats = ({ route, navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inputContainer}
       >
-         <TouchableOpacity style={styles.emojiButton} onPress={() => setShowEmojiPicker(true)}>
-          <Emoji name="emoji-happy" size={15} color="#007bff" />
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={newMessage}
           onChangeText={setNewMessage}
           placeholder="Type your message..."
         />
-       
         <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
           <Icon name="send" size={20} color="#007bff" />
         </TouchableOpacity>
       </KeyboardAvoidingView>
-      <Modal
-        visible={showEmojiPicker}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalContainer}>
-        <TouchableOpacity onPress={handleEmojiPickerCancel} style={styles.cancelButton}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          <View style={styles.modalContent}>
-          
-            <EmojiSelector onEmojiSelected={handleEmojiSelect} />
-            
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -154,7 +116,7 @@ const Chats = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#2c3e50',
     paddingVertical: 10,
     paddingHorizontal: 20,
   },
@@ -163,6 +125,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: '#fff',
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -197,10 +160,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    backgroundColor: '#4caf50',
+    backgroundColor: '#16a085',
   },
   myMessage: {
-    backgroundColor: '#2196f3',
+    backgroundColor: '#2980b9',
   },
   messageText: {
     color: '#fff',
@@ -209,7 +172,7 @@ const styles = StyleSheet.create({
   messageSender: {
     color: '#ccc',
     fontSize: 12,
-    marginLeft: 5
+    marginLeft: 5,
   },
   messageTime: {
     color: '#ccc',
@@ -236,34 +199,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     backgroundColor: '#fff',
-  },
-  emojiButton: {
-    marginRight: 10,
+    color: '#000', // Change text color to black
   },
   sendButton: {
     marginRight: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    height: Dimensions.get('window').height * 0.5, // Set modal height to half the screen height
-  },
-  cancelButton: {
-    alignItems: 'center',
-    marginTop: 10,
-    paddingBottom: 10
-  },
-  cancelButtonText: {
-    color: '#fff',
-    fontSize: 16,
   },
 });
 
