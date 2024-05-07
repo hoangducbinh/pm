@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, StatusBar } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Keyboard, TouchableOpacity, KeyboardAvoidingView, } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -116,7 +116,7 @@ const Chats = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2c3e50',
+    backgroundColor: '#ffff',
     paddingVertical: 10,
     paddingHorizontal: 20,
   },

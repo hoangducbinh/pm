@@ -1,4 +1,4 @@
-import React, { useEffect, useState, } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +12,7 @@ const ChatGroups = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const unsubscribe = firestore()
+    const unsubscribeProject = firestore()
       .collection('Project')
       .onSnapshot(snapshot => {
         const projectList = [];
@@ -20,35 +20,34 @@ const ChatGroups = () => {
           projectList.push({ id: doc.id, ...doc.data() });
         });
         setProjects(projectList);
+        updateLatestMessages(projectList);
       });
     // Clean up subscription
-    return () => unsubscribe();
+    return () => unsubscribeProject();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = firestore()
-      .collection('GroupChats')
-      .onSnapshot(snapshot => {
-        const updatedProjects = projects.map(project => {
-          const groupChat = snapshot.docs.find(doc => doc.data().projectId === project.id);
-          if (groupChat) {
-            const latestMessageRef = groupChat.ref.collection('Messages').orderBy('createdAt', 'desc').limit(1);
-            latestMessageRef.onSnapshot(latestMessageSnapshot => {
-              const latestMessage = latestMessageSnapshot.docs[0]?.data();
-              const updatedProject = { ...project, latestMessage: latestMessage?.text || '', unreadMessages: latestMessage ? 1 : 0 };
-              const index = projects.findIndex(p => p.id === project.id);
-              const updatedProjects = [...projects];
-              updatedProjects[index] = updatedProject;
-              setProjects(updatedProjects);
-            });
-          }
-          return project;
+  const updateLatestMessages = async (projects) => {
+    for (const project of projects) {
+      const groupChatRef = await firestore().collection('GroupChats').where('projectId', '==', project.id).get();
+      if (!groupChatRef.empty) {
+        const latestMessageRef = groupChatRef.docs[0].ref.collection('Messages').orderBy('createdAt', 'desc').limit(1);
+        latestMessageRef.onSnapshot(latestMessageSnapshot => {
+          const latestMessage = latestMessageSnapshot.docs[0]?.data();
+          const updatedProjects = projects.map(p => {
+            if (p.id === project.id) {
+              return {
+                ...p,
+                latestMessage: latestMessage?.text || '',
+                unreadMessages: latestMessage ? 1 : 0
+              };
+            }
+            return p;
+          });
+          setProjects(updatedProjects);
         });
-        setProjects(updatedProjects);
-      });
-    // Clean up subscription
-    return () => unsubscribe();
-  }, [projects]); // Make sure to include projects as a dependency
+      }
+    }
+  };
 
   const handleChatButtonPress = async (projectId) => {
     const groupChatRef = await firestore().collection('GroupChats').where('projectId', '==', projectId).get();
